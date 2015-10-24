@@ -74,6 +74,12 @@ namespace Loxu {
         }
     }
 
+    public class OptionsPopover: Gtk.Popover {
+
+        public OptionsPopover() {
+        }
+    }
+
     public class HeaderBar: Gtk.HeaderBar {
 
         public signal void location_changed(string path);
@@ -85,7 +91,7 @@ namespace Loxu {
         public Gtk.Button forward_button;
         public Gtk.Button up_button;
         public Loxu.EntryLocation entry;
-        public Gtk.ToggleButton menu_button;
+        public OptionsPopover options_popover;
         public ViewPopover view_popover;
 
         public HeaderBar(string? path = null) {
@@ -118,26 +124,38 @@ namespace Loxu {
             box.add(this.up_button);
 
             this.entry = new Loxu.EntryLocation();
-            //this.entry.change_location.connect(this.change_location_cb);
+            this.entry.change_location.connect(this.change_location_cb);
             this.pack_start(this.entry);
 
-            this.menu_button = new Gtk.ToggleButton();
-            this.menu_button.set_image(Utils.get_image_from_name("view-grid-symbolic"));
-            this.menu_button.toggled.connect(this.show_view_popover);
-            this.pack_end(this.menu_button);
+            Gtk.ToggleButton options_button = new Gtk.ToggleButton();
+            options_button.set_image(Utils.get_image_from_name("view-more-symbolic"));
+            options_button.toggled.connect(this.show_options_popover);
+            this.pack_end(options_button);
+
+            this.options_popover = new OptionsPopover();
+            this.options_popover.set_relative_to(options_button);
+            this.options_popover.hide();
+
+            this.options_popover.hide.connect(() => {
+                options_button.set_active(false);
+            });
+
+            Gtk.ToggleButton view_button = new Gtk.ToggleButton();
+            view_button.set_image(Utils.get_image_from_name("view-grid-symbolic"));
+            view_button.toggled.connect(this.show_view_popover);
+            this.pack_end(view_button);
 
             this.view_popover = new ViewPopover();
-            this.view_popover.set_relative_to(this.menu_button);
+            this.view_popover.set_relative_to(view_button);
+            this.view_popover.hide();
 
             this.view_popover.hide.connect(() => {
-                this.menu_button.set_active(false);
+                view_button.set_active(false);
             });
 
             this.view_popover.icon_size_changed.connect((size) => {
                 this.icon_size_changed(size);
             });
-
-            this.view_popover.hide();
 
             this.set_folder(path, false);
             this.set_show_close_button(true);
@@ -151,8 +169,10 @@ namespace Loxu {
             this.up_button.set_sensitive(this.folder != "/");
         }
 
-        private void change_location_cb(Loxu.EntryLocation entry) {
-            this.entry.set_mode(Loxu.EntryMode.BUTTONS);
+        private void change_location_cb(Loxu.EntryLocation entry, string path) {
+            this.set_folder(path);
+            this.location_changed(path);
+            //this.entry.set_mode(Loxu.EntryMode.BUTTONS);
         }
 
         private void go_up(Gtk.Button button) {
@@ -166,6 +186,14 @@ namespace Loxu {
                 this.view_popover.show_all();
             } else if (!button.get_active() || !this.view_popover.get_visible()) {
                 this.view_popover.hide();
+            }
+        }
+
+        private void show_options_popover(Gtk.ToggleButton button) {
+            if (button.get_active()) {
+                this.options_popover.show_all();
+            } else if (!button.get_active() || !this.options_popover.get_visible()) {
+                this.options_popover.hide();
             }
         }
     }

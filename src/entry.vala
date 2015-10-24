@@ -64,9 +64,9 @@ namespace Loxu {
                 folders += "/";
             } else {
                 folders = { Utils.get_home_dir_name() };
-                string next = this.folder.slice(Utils.get_home_dir().length, this.folder.length);
+                string next = this.folder.slice(Utils.get_home_dir().length + 1, this.folder.length);
                 foreach (string folder in next.split("/")) {
-                    folders += ("/" + folder);
+                    folders += folder;
                 }
             }
 
@@ -78,11 +78,12 @@ namespace Loxu {
                 }
 
                 string folder;
+                ulong connect_id;
                 Gtk.Label label = new Gtk.Label(f);
 
                 Gtk.ToggleButton button = new Gtk.ToggleButton();
                 button.set_data("label", label);
-                button.toggled.connect(this.button_active);
+                connect_id = button.toggled.connect(this.button_active);
                 this.pack_start(button, false, false, 0);
 
                 active_button = button;
@@ -101,8 +102,9 @@ namespace Loxu {
                     folder = current_folder + "/" + f;
                 }
 
-                current_folder += (f == Utils.get_home_dir_name()? "": "/") + folder;
+                current_folder = folder;
                 button.set_data("folder", current_folder);
+                button.set_data("connect_id", connect_id);
                 this.buttons[current_folder] = button;
             }
 
@@ -111,13 +113,54 @@ namespace Loxu {
         }
 
         private void button_active(Gtk.ToggleButton button) {
-            //Gtk.Label label = button.get_data("label");
-            if (button.get_active()) {
-                //label.set_markup("<b>%s</b>".printf(label.get_label()));
-            } else {
-                //label.set_markup(label.get_label());
+            string path = button.get_data("folder");
+
+            if (path == this.folder && !button.get_active()) {
+                this.active_button_without_signal(button, true);
+            } else if (path != this.folder && button.get_active()) {
+                Gee.Set<string> keys = this.buttons.keys;
+                foreach (string folder in keys) {
+                    if (folder != path) {
+                        Gtk.ToggleButton button2 = this.buttons[folder];
+                        this.active_button_without_signal(button2, false);
+                    }
+                }
+                this.folder = path;
+                this.change_location(path);
             }
-            //this.change_location(button.get_data);
+
+            this.update_all_buttons_labels();
+        }
+
+        private void active_button_without_signal(Gtk.ToggleButton button, bool active) {
+            ulong connect_id = button.get_data("connect_id");
+            button.disconnect(connect_id);
+            button.set_active(active);
+            connect_id = button.toggled.connect(this.button_active);
+            button.set_data("connect_id", connect_id);
+        }
+
+        private void update_button_label(Gtk.ToggleButton button) {
+            Gtk.Label label = button.get_data("label");
+            string text = label.get_label();
+            string path = button.get_data("folder");
+            if (path == this.folder) {
+                label.set_markup(@"<b>$text</b>");
+                label.set_use_markup(true);
+            } else {
+                label.set_use_markup(false);
+                if (text.has_prefix("<b>") && text.has_suffix("</b>")) {
+                    label.set_label(text.slice(3, text.length - 4));
+                }
+            }
+        }
+
+        private void update_all_buttons_labels() {
+            Gee.Set<string> keys = this.buttons.keys;
+            foreach (string folder in keys) {
+                Gtk.ToggleButton button = this.buttons[folder];
+                this.update_button_label(button);
+            }
         }
     }
 
@@ -138,6 +181,7 @@ namespace Loxu {
             this.entry.set_hexpand(true);
 
             this.buttons_box = new ButtonsBox();
+            this.buttons_box.change_location.connect(this.buttons_box_location_changed);
 
             this.set_orientation(Gtk.Orientation.HORIZONTAL);
             this.set_folder(path);
@@ -162,8 +206,14 @@ namespace Loxu {
             return false;
         }
 
+        private void buttons_box_location_changed(ButtonsBox box, string path) {
+            this.change_location(path);
+        }
+
         public void set_folder(string? path = null) {
             this.folder = (path != null)? path: Utils.get_home_dir();  // path only if isn't null
+            this.buttons_box.set_folder(this.folder);
+            this.entry.set_text(this.folder);
             //this.set_mode(EntryMode.BUTTONS);
         }
 
@@ -179,14 +229,14 @@ namespace Loxu {
                     }
 
                     if (this.buttons_box.get_parent() == null) {
-                        this.buttons_box.set_folder(this.folder);
+                        //this.buttons_box.set_folder(this.folder);
                         this.pack_start(this.buttons_box, true, true, 0);
                     }
                     break;
 
                 case EntryMode.ENTRY:
                     if (this.entry.get_parent() == null) {
-                        this.entry.set_text(this.folder);
+                        //this.entry.set_text(this.folder);
                         this.pack_start(this.entry, true, true, 0);
                     }
 

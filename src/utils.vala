@@ -50,7 +50,7 @@ namespace Utils {
         folders = new GLib.List<string>();
         files = new GLib.List<string>();
 
-        GLib.FileEnumerator enumerator = file.enumerate_children (
+        GLib.FileEnumerator enumerator = file.enumerate_children(
 		        "standard::*",
 		        FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
 		        cancellable);

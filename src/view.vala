@@ -64,6 +64,20 @@ namespace Loxu {
 
         public void set_icon_size(int size) {
             this.icon_size = size;
+
+            switch (this.icon_size) {
+                case 24:
+                    this.set_item_width(30);
+                    break;
+
+                case 48:
+                    this.set_item_width(50);
+                    break;
+
+                default:
+                    this.set_item_width(70);
+                    break;
+            }
         }
 
         public int get_icon_size() {
@@ -128,7 +142,11 @@ namespace Loxu {
             GLib.Value val;
             this.model.get_value(treeiter, 0, out val);
             name = val.get_string();
-            return GLib.Path.build_filename(this.folder, name);
+            if (name == Utils.get_home_dir_name()) {
+                return Utils.get_home_dir();
+            } else {
+                return GLib.Path.build_filename(this.folder, name);
+            }
 		}
     }
 

@@ -22,6 +22,7 @@ namespace Loxu {
 
         public Loxu.HeaderBar headerbar;
         public Loxu.Notebook notebook;
+        public Gtk.PlacesSidebar sidebar;
 
         public Window(string[] paths) {
             this.set_size_request(620, 400);
@@ -38,9 +39,19 @@ namespace Loxu {
 
             this.set_titlebar(this.headerbar);
 
+            Gtk.Paned paned = new Gtk.Paned(Gtk.Orientation.HORIZONTAL);
+            paned.set_wide_handle(false);
+            this.add(paned);
+
+            this.sidebar = new Gtk.PlacesSidebar();
+            this.sidebar.set_show_trash(false);
+            this.sidebar.set_local_only(true);
+            sidebar.open_location.connect(this.open_location_sidebar);
+            paned.add1(this.sidebar);
+
             this.notebook = new Loxu.Notebook();
             this.notebook.location_changed.connect(this.location_changed_notebook);
-            this.add(this.notebook);
+            paned.add2(this.notebook);
 
             this.add_tabs(paths);
             this.show_all();
@@ -61,6 +72,23 @@ namespace Loxu {
 
         private void location_changed_notebook(Loxu.Notebook notebook, string path) {
             this.headerbar.set_folder(path);
+        }
+
+        private void open_location_sidebar(Gtk.PlacesSidebar sidebar, GLib.File file, Gtk.PlacesOpenFlags flag) {
+            string path = file.get_path();
+            switch (flag) {
+                case Gtk.PlacesOpenFlags.NORMAL:
+                    this.notebook.set_current_folder(path);
+                    this.headerbar.set_folder(path);
+                    break;
+
+                case Gtk.PlacesOpenFlags.NEW_TAB:
+                    this.notebook.add_tab(path);
+                    break;
+
+                case Gtk.PlacesOpenFlags.NEW_WINDOW:
+                    break;
+            }
         }
     }
 }
