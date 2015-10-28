@@ -20,9 +20,12 @@ namespace Loxu {
 
     public class ViewPopover: Gtk.Popover {
 
+        public signal void view_mode_changed(Loxu.ViewMode mode);
         public signal void icon_size_changed(int size);
 
         private Gtk.Box box;
+        private Gtk.ToggleButton grid_button;
+        private Gtk.ToggleButton list_button;
 
         public ViewPopover() {
             this.box = new Gtk.Box(Gtk.Orientation.VERTICAL, 0);
@@ -37,30 +40,29 @@ namespace Loxu {
             box.set_margin_bottom(6);
             this.box.pack_start(box, false, false, 0);
 
-            GLib.Icon grid_icon = GLib.Icon.new_for_string("view-grid-symbolic");
+            Gtk.Image grid_image = new Gtk.Image.from_icon_name("view-grid-symbolic", Gtk.IconSize.BUTTON);
 
-            Gtk.ModelButton grid_button = new Gtk.ModelButton();
-            grid_button.text = "Grid";
-            grid_button.iconic = true;
-            grid_button.centered = true;
-            grid_button.icon = grid_icon;
-            box.pack_start(grid_button, true, true, 0);
+            this.grid_button = new Gtk.ToggleButton();
+            this.grid_button.set_tooltip_text("Grid");
+            this.grid_button.set_active(true);
+            this.grid_button.add(grid_image);
+            this.grid_button.toggled.connect(this.view_mode_toggled);
+            box.pack_start(this.grid_button, true, true, 0);
 
-            GLib.Icon list_icon = GLib.Icon.new_for_string("view-list-symbolic");
+            Gtk.Image list_image = new Gtk.Image.from_icon_name("view-list-symbolic", Gtk.IconSize.BUTTON);
 
-            Gtk.ModelButton list_button = new Gtk.ModelButton();
-            list_button.text = "List";
-            list_button.iconic = true;
-            list_button.centered = true;
-            list_button.icon = list_icon;
-            box.pack_start(list_button, true, true, 0);
+            this.list_button = new Gtk.ToggleButton();
+            this.list_button.set_tooltip_text("List");
+            this.list_button.add(list_image);
+            this.list_button.toggled.connect(this.view_mode_toggled);
+            box.pack_start(this.list_button, true, true, 0);
 
             Gtk.Scale scale = new Gtk.Scale.with_range(Gtk.Orientation.HORIZONTAL, 1, 5, 1);
             scale.set_draw_value(false);
             scale.set_has_origin(false);
             scale.set_round_digits(0);
             scale.set_restrict_to_fill_level(false);
-            scale.set_value(2);
+            scale.set_value(3);
 
             for (int i=1; i<=5; i++) {
                 scale.add_mark(i, Gtk.PositionType.BOTTOM, null);
@@ -71,6 +73,18 @@ namespace Loxu {
             });
 
             this.box.pack_start(scale, false, false, 0);
+        }
+
+        private void view_mode_toggled(Gtk.ToggleButton button) {
+            if (button.get_active()) {
+                if (button == this.grid_button) {
+                    this.list_button.set_active(false);
+                    this.view_mode_changed(Loxu.ViewMode.ICON);
+                } else if (button == this.list_button) {
+                    this.grid_button.set_active(false);
+                    this.view_mode_changed(Loxu.ViewMode.LIST);
+                }
+            }
         }
     }
 
@@ -84,6 +98,7 @@ namespace Loxu {
 
         public signal void location_changed(string path);
         public signal void icon_size_changed(int size);
+        public signal void view_mode_changed(Loxu.ViewMode mode);
 
         public string folder;
 
@@ -129,7 +144,6 @@ namespace Loxu {
 
             Gtk.ToggleButton options_button = new Gtk.ToggleButton();
             options_button.set_image(Utils.get_image_from_name("view-more-symbolic"));
-            options_button.toggled.connect(this.show_options_popover);
             this.pack_end(options_button);
 
             this.options_popover = new OptionsPopover();
@@ -155,6 +169,10 @@ namespace Loxu {
 
             this.view_popover.icon_size_changed.connect((size) => {
                 this.icon_size_changed(size);
+            });
+
+            this.view_popover.view_mode_changed.connect((mode) => {
+                this.view_mode_changed(mode);
             });
 
             this.set_folder(path, false);

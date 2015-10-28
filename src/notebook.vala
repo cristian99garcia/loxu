@@ -46,6 +46,8 @@ namespace Loxu {
 
         public signal void location_changed(string path);
 
+        public Loxu.ViewMode view_mode = Loxu.ViewMode.ICON;
+
         public Notebook() {
         }
 
@@ -53,6 +55,7 @@ namespace Loxu {
             NotebookTab tab = new NotebookTab(path);
 
             Loxu.View view = new Loxu.View(path);
+            view.set_view_mode(this.view_mode);
             view.location_changed.connect(this.location_changed_cb);
 
             this.append_page(view, tab);
@@ -86,6 +89,14 @@ namespace Loxu {
             foreach (Gtk.Widget widget in this.get_children()) {
                 Loxu.View view = (widget as Loxu.View);
                 view.set_icon_size(size);
+            }
+        }
+
+        public void set_view_mode(Loxu.ViewMode mode) {
+            this.view_mode = mode;
+            foreach (Gtk.Widget widget in this.get_children()) {
+                Loxu.View view = (widget as Loxu.View);
+                view.set_view_mode(this.view_mode);
             }
         }
     }

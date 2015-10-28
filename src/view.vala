@@ -18,16 +18,6 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 
 namespace Loxu {
 
-    public enum ViewMode {
-        ICON,
-        LIST
-    }
-
-    public enum ActivationMode {
-        SINGLE,
-        DOBLE
-    }
-
     public class IconView: Gtk.IconView {
 
         public signal void location_changed(string path);
@@ -35,7 +25,7 @@ namespace Loxu {
 
         public string folder;
         public int icon_size = 48;
-        public ActivationMode activation_mode;
+        public Loxu.ActivationMode activation_mode;
         public Gtk.ListStore model;
 
         public IconView(string? path = null) {
@@ -84,7 +74,7 @@ namespace Loxu {
             return this.icon_size;
         }
 
-        public void set_activation_mode(ActivationMode mode) {
+        public void set_activation_mode(Loxu.ActivationMode mode) {
             this.activation_mode = mode;
         }
 
@@ -95,7 +85,7 @@ namespace Loxu {
         private bool button_press_event_cb(Gtk.Widget self, Gdk.EventButton event) {
             int x = (int)event.x;
             int y = (int)event.y;
-            Gdk.EventType activation = (this.activation_mode == ActivationMode.SINGLE)? Gdk.EventType.BUTTON_PRESS: Gdk.EventType.2BUTTON_PRESS;
+            Gdk.EventType activation = (this.activation_mode == Loxu.ActivationMode.SINGLE)? Gdk.EventType.BUTTON_PRESS: Gdk.EventType.2BUTTON_PRESS;
 
             if (event.type == activation) {
                 Gtk.TreePath? path = this.get_path_at_pos(x, y);
@@ -156,7 +146,7 @@ namespace Loxu {
 
         public string folder;
         public int icon_size;
-        public ActivationMode activation_mode;
+        public Loxu.ActivationMode activation_mode;
 
         public Gtk.IconView view;
         public Gtk.ListStore model;
@@ -181,7 +171,7 @@ namespace Loxu {
             return this.icon_size;
         }
 
-        public void set_activation_mode(ActivationMode mode) {
+        public void set_activation_mode(Loxu.ActivationMode mode) {
             this.activation_mode = mode;
         }
 
@@ -198,15 +188,16 @@ namespace Loxu {
         public signal void location_changed(string path);
 
         public string folder;
-        public int icon_size = 48;
-        public ActivationMode activation_mode = ActivationMode.DOBLE;
+        public int icon_size = 72;
+        public Loxu.ActivationMode activation_mode = Loxu.ActivationMode.DOBLE;
 
-        public ViewMode view_mode;
+        public Loxu.ViewMode view_mode;
+        public Gtk.ScrolledWindow scroll_grid;
+        public Gtk.ScrolledWindow scroll_list;
         public IconView icon_view;
         public ListView tree_view;
-        public Gtk.ScrolledWindow scroll;
 
-        public View(string? path = null, ViewMode view_mode = ViewMode.ICON) {
+        public View(string? path = null, Loxu.ViewMode view_mode = Loxu.ViewMode.ICON) {
             this.folder = (path != null)? path: Utils.get_home_dir();
             this.view_mode = view_mode;
 
@@ -216,8 +207,12 @@ namespace Loxu {
             this.tree_view = new ListView();
             this.tree_view.location_changed.connect(this.location_changed_cb);
 
-            this.scroll = new Gtk.ScrolledWindow(null, null);
-            this.pack_start(this.scroll, true, true, 0);
+            this.scroll_grid = new Gtk.ScrolledWindow(null, null);
+            this.scroll_grid.add(this.icon_view);
+            this.pack_start(this.scroll_grid, true, true, 0);
+
+            this.scroll_list = new Gtk.ScrolledWindow(null, null);
+            this.scroll_list.add(this.tree_view);
 
             this.update();
         }
@@ -230,28 +225,6 @@ namespace Loxu {
             this.tree_view.set_activation_mode(this.activation_mode);
             this.tree_view.set_icon_size(this.icon_size);
             this.tree_view.set_folder(this.folder);
-
-            switch (this.view_mode) {
-                case ViewMode.ICON:
-                    if (this.tree_view.get_parent() != null) {
-                        this.scroll.remove(this.tree_view);
-                    }
-
-                    if (this.icon_view.get_parent() == null) {
-                        this.scroll.add(this.icon_view);
-                    }
-                    break;
-
-                case ViewMode.LIST:
-                    if (this.icon_view.get_parent() != null) {
-                        this.scroll.remove(this.icon_view);
-                    }
-
-                    if (this.tree_view.get_parent() == null) {
-                        this.scroll.add(this.icon_view);
-                    }
-                    break;
-            }
 
             this.show_all();
         }
@@ -279,7 +252,7 @@ namespace Loxu {
             return this.icon_size;
         }
 
-        public void set_activation_mode(ActivationMode mode) {
+        public void set_activation_mode(Loxu.ActivationMode mode) {
             this.activation_mode = mode;
         }
 
@@ -287,12 +260,25 @@ namespace Loxu {
             return this.activation_mode;
         }
 
-        public void set_view_mode(ViewMode mode) {
+        public void set_view_mode(Loxu.ViewMode mode) {
+            if (this.view_mode == mode) {
+                return;
+            }
+
             this.view_mode = mode;
+
+            if (this.view_mode == Loxu.ViewMode.ICON) {
+                this.remove(this.scroll_list);
+                this.pack_start(this.scroll_grid, true, true, 0);
+            } else if (this.view_mode == Loxu.ViewMode.LIST) {
+                this.remove(this.scroll_grid);
+                this.pack_start(this.scroll_list, true, true, 0);
+            }
+
             this.update();
         }
 
-        public ViewMode get_view_mode() {
+        public Loxu.ViewMode get_view_mode() {
             return this.view_mode;
         }
     }

@@ -37,6 +37,10 @@ namespace Loxu {
                 this.notebook.set_icon_size(size);
             });
 
+            this.headerbar.view_mode_changed.connect((mode) => {
+                this.notebook.set_view_mode(mode);
+            });
+
             this.set_titlebar(this.headerbar);
 
             Gtk.Paned paned = new Gtk.Paned(Gtk.Orientation.HORIZONTAL);
