@@ -27,6 +27,11 @@ namespace Loxu {
         SINGLE,
         DOBLE
     }
+
+    public enum SortMode {
+        NAME,
+        SIZE,
+    }
 }
 
 namespace Utils {

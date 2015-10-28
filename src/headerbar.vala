@@ -22,6 +22,8 @@ namespace Loxu {
 
         public signal void view_mode_changed(Loxu.ViewMode mode);
         public signal void icon_size_changed(int size);
+        public signal void sort_mode_changed(Loxu.SortMode mode);
+        public signal void reverse_changed(bool reverse);
 
         private Gtk.Box box;
         private Gtk.ToggleButton grid_button;
@@ -73,6 +75,39 @@ namespace Loxu {
             });
 
             this.box.pack_start(scale, false, false, 0);
+
+            this.box.pack_start(new Gtk.Separator(Gtk.Orientation.HORIZONTAL), false, false, 10);
+
+            Gtk.Label label = new Gtk.Label("Sort");
+            label.set_sensitive(false);
+            label.set_xalign(0);
+            this.box.pack_start(label, false, false, 0);
+
+            Gtk.RadioButton name_radio_button = new Gtk.RadioButton.with_label(null, "Name");
+            this.box.pack_start(name_radio_button, false, false, 0);
+
+            name_radio_button.toggled.connect(() => {
+                if (name_radio_button.get_active()) {
+                    this.sort_mode_changed(Loxu.SortMode.NAME);
+                }
+            });
+
+            Gtk.RadioButton size_radio_button = new Gtk.RadioButton.with_label_from_widget(name_radio_button, "Size");
+            this.box.pack_start(size_radio_button, false, false, 0);
+
+            size_radio_button.toggled.connect(() => {
+                if (size_radio_button.get_active()) {
+                    this.sort_mode_changed(Loxu.SortMode.SIZE);
+                }
+            });
+
+            Gtk.CheckButton sort_reverse = new Gtk.CheckButton.with_label("Reverse");
+            this.box.pack_start(sort_reverse, false, false, 0);
+
+            this.box.pack_start(new Gtk.Separator(Gtk.Orientation.HORIZONTAL), false, false, 10);
+
+            Gtk.CheckButton show_hidden = new Gtk.CheckButton.with_label("Show hidden files");
+            this.box.pack_start(show_hidden, false, false, 0);
         }
 
         private void view_mode_toggled(Gtk.ToggleButton button) {
