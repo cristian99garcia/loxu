@@ -61,18 +61,14 @@ namespace Utils {
         return new Gtk.Image.from_icon_name(name, size);
     }
 
-    public void list_directory(string folder, out GLib.List<string> folders, out GLib.List<string> files, bool hidden_files = false) {
+    public void list_directory(string folder, Loxu.SortMode mode, bool reverse_sort, out GLib.List<string> folders, out GLib.List<string> files, bool hidden_files = false) {
         GLib.File file = GLib.File.new_for_path(folder);
         GLib.Cancellable cancellable = new GLib.Cancellable();
 
         folders = new GLib.List<string>();
         files = new GLib.List<string>();
 
-        GLib.FileEnumerator enumerator = file.enumerate_children(
-		        "standard::*",
-		        FileQueryInfoFlags.NOFOLLOW_SYMLINKS,
-		        cancellable);
-
+        GLib.FileEnumerator enumerator = file.enumerate_children("standard::*", FileQueryInfoFlags.NOFOLLOW_SYMLINKS, cancellable);
 	    GLib.FileInfo info = null;
 
         try {
@@ -89,6 +85,11 @@ namespace Utils {
 	        }
 	    } catch (GLib.Error e) {
 	        print("Error listing %s\n", folder);
+	    }
+
+	    if (reverse_sort) {
+	        folders.reverse();
+	        files.reverse();
 	    }
     }
 

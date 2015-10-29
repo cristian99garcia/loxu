@@ -25,8 +25,10 @@ namespace Loxu {
 
         public string folder;
         public int icon_size = 48;
+        public bool reverse_sort = false;
+        public Loxu.SortMode sort_mode = Loxu.SortMode.NAME;
         public Loxu.ActivationMode activation_mode;
-        public Gtk.ListStore model;
+        public new Gtk.ListStore model;
 
         public IconView(string? path = null) {
             this.model = new Gtk.ListStore(2, typeof(string), typeof(Gdk.Pixbuf));
@@ -74,6 +76,14 @@ namespace Loxu {
             return this.icon_size;
         }
 
+        public void set_reverse_sort(bool reverse) {
+            this.reverse_sort = reverse;
+        }
+
+        public bool get_reverse_sort() {
+            return this.reverse_sort;
+        }
+
         public void set_activation_mode(Loxu.ActivationMode mode) {
             this.activation_mode = mode;
         }
@@ -103,16 +113,26 @@ namespace Loxu {
         private void update() {
             GLib.List<string> folders;
             GLib.List<string> files;
-            Utils.list_directory(this.folder, out folders, out files);
+            Utils.list_directory(this.folder, this.sort_mode, this.reverse_sort, out folders, out files);
 
             this.model.clear();
 
-            foreach (string path in folders) {
-                this.add_icon(path);
-            }
+            if (this.reverse_sort) {
+                foreach (string path in files) {
+                    this.add_icon(path);
+                }
 
-            foreach (string path in files) {
-                this.add_icon(path);
+                foreach (string path in folders) {
+                    this.add_icon(path);
+                }
+            } else {
+                foreach (string path in folders) {
+                    this.add_icon(path);
+                }
+
+                foreach (string path in files) {
+                    this.add_icon(path);
+                }
             }
         }
 
@@ -146,12 +166,35 @@ namespace Loxu {
 
         public string folder;
         public int icon_size;
+        public bool reverse_sort;
+        public Loxu.SortMode sort_mode = Loxu.SortMode.NAME;
         public Loxu.ActivationMode activation_mode;
 
+        public Gtk.TreeSelection selection;
         public Gtk.IconView view;
-        public Gtk.ListStore model;
+        public new Gtk.ListStore model;
 
         public ListView() {
+            this.model = new Gtk.ListStore(2, typeof(Gdk.Pixbuf), typeof(string));
+            this.set_model(this.model);
+
+            this.selection = this.get_selection();
+            this.selection.set_mode(Gtk.SelectionMode.MULTIPLE);
+
+            Gtk.TreeViewColumn col_name = new Gtk.TreeViewColumn();
+            col_name.set_title("Name");
+            col_name.set_expand(true);
+            col_name.set_sizing(Gtk.TreeViewColumnSizing.AUTOSIZE);
+
+		    Gtk.CellRendererPixbuf cell_icon = new Gtk.CellRendererPixbuf();
+		    Gtk.CellRendererText cell_text = new Gtk.CellRendererText();
+            col_name.pack_start(cell_icon, false);
+            col_name.pack_start(cell_text, true);
+
+            col_name.add_attribute(cell_icon, "pixbuf", 0);
+            col_name.add_attribute(cell_text, "text", 1);
+
+            this.append_column(col_name);
         }
 
         public void set_folder(string path) {
@@ -171,6 +214,14 @@ namespace Loxu {
             return this.icon_size;
         }
 
+        public void set_reverse_sort(bool reverse) {
+            this.reverse_sort = reverse;
+        }
+
+        public bool get_reverse_sort() {
+            return this.reverse_sort;
+        }
+
         public void set_activation_mode(Loxu.ActivationMode mode) {
             this.activation_mode = mode;
         }
@@ -180,7 +231,42 @@ namespace Loxu {
         }
 
         private void update() {
+            GLib.List<string> folders;
+            GLib.List<string> files;
+            Utils.list_directory(this.folder, this.sort_mode, this.reverse_sort, out folders, out files);
+
+            this.model.clear();
+
+            if (this.reverse_sort) {
+                foreach (string path in files) {
+                    this.add_icon(path);
+                }
+
+                foreach (string path in folders) {
+                    this.add_icon(path);
+                }
+            } else {
+                foreach (string path in folders) {
+                    this.add_icon(path);
+                }
+
+                foreach (string path in files) {
+                    this.add_icon(path);
+                }
+            }
         }
+
+        private void add_icon(string path) {
+            Gtk.TreeIter iter;
+            Gdk.Pixbuf? pixbuf = Utils.get_pixbuf_from_path(path, this.icon_size);
+
+            if (pixbuf != null) {
+                this.model.append(out iter);
+                this.model.set(iter, 0, pixbuf, 1, Utils.get_path_name(path));
+            } else {
+                print(path + "\n");
+            }
+		}
     }
 
     public class View: Gtk.Box {
@@ -189,6 +275,7 @@ namespace Loxu {
 
         public string folder;
         public int icon_size = 72;
+        public bool reverse_sort = false;
         public Loxu.ActivationMode activation_mode = Loxu.ActivationMode.DOBLE;
 
         public Loxu.ViewMode view_mode;
@@ -220,10 +307,12 @@ namespace Loxu {
         private void update() {
             this.icon_view.set_activation_mode(this.activation_mode);
             this.icon_view.set_icon_size(this.icon_size);
+            this.icon_view.set_reverse_sort(this.reverse_sort);
             this.icon_view.set_folder(this.folder);
 
             this.tree_view.set_activation_mode(this.activation_mode);
             this.tree_view.set_icon_size(this.icon_size);
+            this.tree_view.set_reverse_sort(this.reverse_sort);
             this.tree_view.set_folder(this.folder);
 
             this.show_all();
@@ -250,6 +339,15 @@ namespace Loxu {
 
         public int get_icon_size() {
             return this.icon_size;
+        }
+
+        public void set_reverse_sort(bool reverse) {
+            this.reverse_sort = reverse;
+            this.update();
+        }
+
+        public bool get_reverse_sort() {
+            return this.reverse_sort;
         }
 
         public void set_activation_mode(Loxu.ActivationMode mode) {

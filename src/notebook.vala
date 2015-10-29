@@ -99,5 +99,12 @@ namespace Loxu {
                 view.set_view_mode(this.view_mode);
             }
         }
+
+        public void set_reverse_sort(bool reverse) {
+            foreach (Gtk.Widget widget in this.get_children()) {
+                Loxu.View view = (widget as Loxu.View);
+                view.set_reverse_sort(reverse);
+            }
+        }
     }
 }

@@ -41,6 +41,14 @@ namespace Loxu {
                 this.notebook.set_view_mode(mode);
             });
 
+            this.headerbar.sort_mode_changed.connect((mode) => {
+
+            });
+
+            this.headerbar.sort_reverse_changed.connect((reverse) => {
+                this.notebook.set_reverse_sort(reverse);
+            });
+
             this.set_titlebar(this.headerbar);
 
             Gtk.Paned paned = new Gtk.Paned(Gtk.Orientation.HORIZONTAL);

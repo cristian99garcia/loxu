@@ -23,7 +23,8 @@ namespace Loxu {
         public signal void view_mode_changed(Loxu.ViewMode mode);
         public signal void icon_size_changed(int size);
         public signal void sort_mode_changed(Loxu.SortMode mode);
-        public signal void reverse_changed(bool reverse);
+        public signal void sort_reverse_changed(bool reverse);
+        public signal void show_hidden_changed(bool show);
 
         private Gtk.Box box;
         private Gtk.ToggleButton grid_button;
@@ -104,10 +105,18 @@ namespace Loxu {
             Gtk.CheckButton sort_reverse = new Gtk.CheckButton.with_label("Reverse");
             this.box.pack_start(sort_reverse, false, false, 0);
 
+            sort_reverse.toggled.connect(() => {
+                this.sort_reverse_changed(sort_reverse.get_active());
+            });
+
             this.box.pack_start(new Gtk.Separator(Gtk.Orientation.HORIZONTAL), false, false, 10);
 
             Gtk.CheckButton show_hidden = new Gtk.CheckButton.with_label("Show hidden files");
             this.box.pack_start(show_hidden, false, false, 0);
+
+            show_hidden.toggled.connect(() => {
+                this.show_hidden_changed(show_hidden.get_active());
+            });
         }
 
         private void view_mode_toggled(Gtk.ToggleButton button) {
@@ -134,6 +143,9 @@ namespace Loxu {
         public signal void location_changed(string path);
         public signal void icon_size_changed(int size);
         public signal void view_mode_changed(Loxu.ViewMode mode);
+        public signal void sort_mode_changed(Loxu.SortMode mode);
+        public signal void sort_reverse_changed(bool reverse);
+        public signal void show_hidden_changed(bool show);
 
         public string folder;
 
@@ -208,6 +220,18 @@ namespace Loxu {
 
             this.view_popover.view_mode_changed.connect((mode) => {
                 this.view_mode_changed(mode);
+            });
+
+            this.view_popover.sort_mode_changed.connect((mode) => {
+                this.sort_mode_changed(mode);
+            });
+
+            this.view_popover.sort_reverse_changed.connect((reverse) => {
+                this.sort_reverse_changed(reverse);
+            });
+
+            this.view_popover.show_hidden_changed.connect((show) => {
+                this.show_hidden_changed(show);
             });
 
             this.set_folder(path, false);
