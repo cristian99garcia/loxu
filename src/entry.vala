@@ -41,9 +41,15 @@ namespace Loxu {
 
         public void set_folder(string? p) {
             string path = (p != null)? p: Utils.get_home_dir();
-            if (this.folder != null && this.folder.has_prefix(path)) {  // Python "startswith" function
-                //this.active_button(this.buttons[folder]);
-                //this.buttons[folder].set_active(true);
+            if (this.folder != null && this.folder.has_prefix(path) && path != "/") {  // Python "startswith" function
+                if (!this.folder.has_prefix(Utils.get_home_dir())) {
+                    this.folder = path;
+                    return;
+                } else if (this.folder.has_prefix(Utils.get_home_dir()) && path.has_prefix(Utils.get_home_dir())) {
+                    this.folder = path;
+                    return;
+                }
+            } else if (this.folder != null && path == "/") {  // ever path has preffix "/"
                 this.folder = path;
                 return;
             }
@@ -60,13 +66,17 @@ namespace Loxu {
             string current_folder = "";
 
             if (!home) {
-                folders = this.folder.split("/");
-                folders += "/";
+                folders = { "/" };
+                foreach (string folder in this.folder.split("/")) {
+                    folders += folder;
+                }
             } else {
                 folders = { Utils.get_home_dir_name() };
-                string next = this.folder.slice(Utils.get_home_dir().length + 1, this.folder.length);
-                foreach (string folder in next.split("/")) {
-                    folders += folder;
+                if (this.folder != Utils.get_home_dir()) {
+                    string next = this.folder.slice(Utils.get_home_dir().length + 1, this.folder.length);
+                    foreach (string folder in next.split("/")) {
+                        folders += folder;
+                    }
                 }
             }
 
@@ -93,6 +103,9 @@ namespace Loxu {
 
                 if (f == "") {
                     continue;
+                } if (f == "/") {
+                    folder = "/";
+                    box.pack_start(Utils.get_image_from_name("drive-harddisk-system-symbolic"), false, false, 1);
                 } else if (f == Utils.get_home_dir_name()) {
                     folder = Utils.get_home_dir();
                     box.pack_start(Utils.get_image_from_name("go-home-symbolic"), false, false, 1);
@@ -102,7 +115,7 @@ namespace Loxu {
                     folder = current_folder + "/" + f;
                 }
 
-                current_folder = folder;
+                current_folder = folder.replace("//", "/");
                 button.set_data("folder", current_folder);
                 button.set_data("connect_id", connect_id);
                 this.buttons[current_folder] = button;
